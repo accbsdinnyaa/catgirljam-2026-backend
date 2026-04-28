@@ -372,9 +372,25 @@ export class MyDurableObject extends DurableObject {
 			ws.close(code, reason);
 
 		if (isNonLoner(session)) {
-			// TODO also end date
 			console.log("removed from non-loners");
 			this.nonLoners.delete(ws);
+
+			// end date
+			{
+				const date = (await this.date(session.dateId))!;
+				const isLeft = date.left === session.userId;
+				const otherId = isLeft
+					? date.right
+					: date.left;
+
+				const [otherWs, _] = this.nonLoners.entries()
+					.find(([_, nonLoner]) => nonLoner.userId === otherId)!;
+				await this.date(session.dateId, null);
+				this.nonLoners.delete(otherWs);
+				otherWs.close();
+				this.nonLoners.delete(ws);
+				ws.close();
+			}
 		} else {
 			console.log("removed from loners");
 			this.loners.delete(ws);
