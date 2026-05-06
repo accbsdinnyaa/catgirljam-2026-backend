@@ -323,6 +323,7 @@ export class MyDurableObject extends DurableObject {
 				| { text: string }
 				| { setMe: Exclude<Loner['info'], null> }
 				| { getMe: true }
+				| { amILeft: true }
 				= JSON.parse(message);
 
 			if (typeof action === 'object' && 'text' in action) {
@@ -357,6 +358,10 @@ export class MyDurableObject extends DurableObject {
 			}
 			else if (typeof action === 'object' && 'getMe' in action) {
 				ws.send(JSON.stringify(session.info));
+				return;
+			}
+			else if (typeof action === 'object' && 'amILeft' in action) {
+				ws.send(JSON.stringify(isLeft));
 				return;
 			}
 
@@ -395,6 +400,7 @@ export class MyDurableObject extends DurableObject {
 
 		if (typeof session === 'boolean') {
 			console.log("closed person /watch'ing");
+			this.pollers.delete(ws);
 			// ws.close();
 			return;
 		}
@@ -419,7 +425,8 @@ export class MyDurableObject extends DurableObject {
 				otherWs.close();
 				this.nonLoners.delete(ws);
 			}
-		} else {
+		}
+		else {
 			console.log("removed from loners");
 			this.loners.delete(ws);
 
