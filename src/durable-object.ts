@@ -322,6 +322,7 @@ export class MyDurableObject extends DurableObject {
 				| { admin: AdminMessages }
 				| { text: string }
 				| { setMe: Exclude<Loner['info'], null> }
+				| { meow: true }
 				| { getMe: true }
 				| { amILeft: true }
 				= JSON.parse(message);
@@ -364,6 +365,10 @@ export class MyDurableObject extends DurableObject {
 				ws.send(JSON.stringify(isLeft));
 				return;
 			}
+			else if (typeof action === 'object' && 'meow' in action) {
+				otherWs.send(JSON.stringify({ meow: true }));
+				return;
+			}
 
 			const error = modify(date.s, action, isLeft);
 			if (error) {
@@ -374,8 +379,15 @@ export class MyDurableObject extends DurableObject {
 			}
 			this.date(session.dateId, { ...date, s: date.s });
 
-			ws.send(JSON.stringify(date.s));
-			otherWs.send(JSON.stringify(date.s));
+			// console.log("sent state change: ", JSON.stringify(date.s, null, 2));
+			ws.send(JSON.stringify({
+				state: date.s.state,
+				q: date.s.q,
+			}));
+			otherWs.send(JSON.stringify({
+				state: date.s.state,
+				q: date.s.q,
+			}));
 		}
 		catch (e) {
 			console.log("caught error", e);

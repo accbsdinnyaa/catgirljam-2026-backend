@@ -135,20 +135,24 @@ function replaceSingle(
   { state, lastIndividual, lastShared: prevLastShared }: S
 ): S {
   const lastShared = Array.isArray(state)
-    ? prevLastShared
-    : state;
+    ? (prevLastShared ? clone.SharedS(prevLastShared) : null)
+    : clone.SharedS(state);
 
   const newLeftState = left
     ? newSingle
-    : lastIndividual[0]
-      ? lastIndividual[0]
-      : 'idle';
+    : Array.isArray(state)
+    	? state[0]
+    	: lastIndividual[0]
+	      ? lastIndividual[0]
+	      : 'idle';
 
   const newRightState = !left
     ? newSingle
-    : lastIndividual[1]
-      ? lastIndividual[1]
-      : 'idle';
+    : Array.isArray(state)
+    	? state[1]
+    	: lastIndividual[1]
+	      ? lastIndividual[1]
+	      : 'idle';
 
   lastIndividual = Array.isArray(state)
     ? state
@@ -214,7 +218,7 @@ const notImmediateSingleActionQuestions: Record<
 > = {
   licking: (s, left) => ({
     q: "may i lick uuu~? ☞~☜",
-    left,
+    left: !left, // question has to be answered by right
     as: [
       ["noooo not right now ! ( ˶•̀ㅁ•́) !!", id(s)],
       ["yayy lickies (˶˃𐃷˂˶)", replaceSingle('licking', left, s)],
@@ -223,7 +227,7 @@ const notImmediateSingleActionQuestions: Record<
 
   'self-procreating': (s, left) => ({
     q: "would u mind if i make *sillies* next to you? (⸝⸝๑  ̫ ๑⸝⸝⸝)",
-    left,
+    left: !left, // question has to be answered by right
     as: [
       ["yess plss not right now if u dont mind! (♡ˊ͈ ꒳ ˋ͈)", id(s)],
       ["NOPE (⸝⸝⸝-﹏-⸝⸝⸝) *poggies* ♡(˃͈ ˂͈ )", replaceSingle('self-procreating', left, s)],
@@ -322,7 +326,7 @@ export function modify(s: S, a: Action, left: boolean): string | null {
       if (hasKey(notImmediateSingleActionQuestions, a)) {
         s.q = notImmediateSingleActionQuestions[a](
           s,
-          !left // if left asked, question has to be answered by right
+          left
         );
         return null;
       } else if (stringIsImmediateSingleAction(a)) {
