@@ -27,6 +27,7 @@ type Loner = {
 	info: {
 		name: string,
 		desc: string,
+		color: [Number, Number, Number],
 		nsfw?: boolean,
 	} | null,
 };
@@ -34,7 +35,9 @@ type Loner = {
 function validateInfo(d: unknown): d is Exclude<Loner['info'], null> {
 	return typeof d === 'object' && d !== null &&
 		'name' in d && typeof d.name === 'string' &&
-		'desc' in d && typeof d.desc === 'string';
+		'desc' in d && typeof d.desc === 'string' &&
+		('color' in d && Array.isArray(d.color) && d.color.length === 3
+			&& d.color.every(val => typeof val === 'number'));
 }
 
 type NonLoner = {
@@ -225,6 +228,7 @@ export class MyDurableObject extends DurableObject {
 					userId: firstId, dateId, info: {
 						name: "",
 						desc: "",
+						color: [0.5, 0.5, 0.5],
 						nsfw: nsfw || undefined
 					}
 				};
