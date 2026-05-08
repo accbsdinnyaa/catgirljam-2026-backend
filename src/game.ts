@@ -217,11 +217,11 @@ const notImmediateSingleActionQuestions: Record<
   (s: S, left: boolean) => NonNull<S['q']>
 > = {
   licking: (s, left) => ({
-    q: "may i lick uuu~? ☞~☜",
+    q: "may i lick uuu~?",
     left: !left, // question has to be answered by right
     as: [
-      ["noooo not right now ! ( ˶•̀ㅁ•́) !!", id(s)],
-      ["yayy lickies (˶˃𐃷˂˶)", replaceSingle('licking', left, s)],
+      ["noooo not right now !!!", id(s)],
+      ["yayy lickies~ >w<", replaceSingle('licking', left, s)],
     ],
   } as NonNull<S['q']>),
 

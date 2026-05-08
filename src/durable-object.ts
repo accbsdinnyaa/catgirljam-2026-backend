@@ -224,14 +224,7 @@ export class MyDurableObject extends DurableObject {
 
 				this.ctx.acceptWebSocket(server);
 
-				const firstNew: NonLoner = {
-					userId: firstId, dateId, info: {
-						name: "",
-						desc: "",
-						color: [0.5, 0.5, 0.5],
-						nsfw: nsfw || undefined
-					}
-				};
+				const firstNew: NonLoner = { userId: firstId, dateId, info: first[1].info };
 				this.loners.delete(first[0]);
 
 				this.pollers.forEach((nsfw, ws) => {
@@ -241,13 +234,22 @@ export class MyDurableObject extends DurableObject {
 				this.nonLoners.set(first[0], firstNew);
 				first[0].serializeAttachment(firstNew);
 
-				const second: NonLoner = { userId: secondId, dateId, info: first[1].info };
+				const second: NonLoner = {
+					userId: secondId,
+					dateId,
+					info: {
+						name: "",
+						desc: "",
+						color: [0.5, 0.5, 0.5],
+						nsfw: nsfw || undefined
+					}
+				};
 				this.nonLoners.set(server, second);
 				server.serializeAttachment(second);
 
 				// letting the person who created the room know that the date has started by sending the
 				// initial state
-				first[0].send(JSON.stringify(initDate.s));
+				// first[0].send(JSON.stringify(initDate.s));
 
 				// add to list of loners
 				return new Response(null, { status: 101, webSocket: client });
@@ -296,6 +298,8 @@ export class MyDurableObject extends DurableObject {
 					console.log("bad initialization");
 					ws.send("bad initialization");
 				} else {
+					console.log(`hoster "${messageJson.name}" initialized, ${session.lonerId}`);
+					// console.log(messageJson);
 					session.info = messageJson;
 					ws.serializeAttachment(session);
 					this.pollers.forEach((nsfw, ws) => {
@@ -313,6 +317,7 @@ export class MyDurableObject extends DurableObject {
 		}
 
 		const date = (await this.date(session.dateId))!;
+		// console.log(date.left, date.right, session.userId);
 		const isLeft = date.left === session.userId;
 		const otherId = isLeft
 			? date.right
@@ -358,7 +363,12 @@ export class MyDurableObject extends DurableObject {
 					ws.send(makeError("bad info"));
 					return;
 				}
+				console.log(`(ideally only) joiner "${action.setMe.name}" initialized`);
 				session.info = { ...action.setMe, nsfw: session.info.nsfw };
+				otherWs.send(JSON.stringify({
+					state: date.s.state,
+					q: date.s.q,
+				})); // initialize here
 				ws.serializeAttachment(session);
 				return;
 			}
@@ -375,7 +385,12 @@ export class MyDurableObject extends DurableObject {
 				return;
 			}
 			else if (typeof action === 'object' && 'names' in action) {
-				ws.send(JSON.stringify({ you: session.info.name, them: other.info.name }));
+				console.log(session.info);
+				console.log(`told ${session.info.name} that their name is ${other.info.name}, ${session.userId}`);
+				ws.send(JSON.stringify({
+					you: [session.info.name, session.info.color],
+					them: [other.info.name, other.info.color],
+				}));
 				return;
 			}
 
@@ -460,12 +475,13 @@ export class MyDurableObject extends DurableObject {
 			console.log("closed first person in date");
 		else
 			console.log("closed loner");
-		// if (code === 1005) {
-		// 	ws.close();
-		// }
-		// else {
-		// 	ws.close(code, reason);
-		// }
+
+		if (code === 1005) {
+			ws.close();
+		}
+		else {
+			ws.close(code, reason);
+		}
 	}
 
 	/**
