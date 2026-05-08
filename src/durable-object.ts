@@ -314,7 +314,7 @@ export class MyDurableObject extends DurableObject {
 			? date.right
 			: date.left;
 
-		const [otherWs, _] = this.nonLoners.entries().find(([_, nonLoner]) => nonLoner.userId === otherId)!;
+		const [otherWs, other]: [WebSocket, NonLoner] = this.nonLoners.entries().find(([_, nonLoner]) => nonLoner.userId === otherId)!;
 
 		try {
 			const action:
@@ -325,6 +325,7 @@ export class MyDurableObject extends DurableObject {
 				| { meow: true }
 				| { getMe: true }
 				| { amILeft: true }
+				| { names: true }
 				= JSON.parse(message);
 
 			if (typeof action === 'object' && 'text' in action) {
@@ -367,6 +368,10 @@ export class MyDurableObject extends DurableObject {
 			}
 			else if (typeof action === 'object' && 'meow' in action) {
 				otherWs.send(JSON.stringify({ meow: true }));
+				return;
+			}
+			else if (typeof action === 'object' && 'names' in action) {
+				ws.send(JSON.stringify({ you: session.info.name, them: other.info.name }));
 				return;
 			}
 
