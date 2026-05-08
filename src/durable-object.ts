@@ -326,7 +326,7 @@ export class MyDurableObject extends DurableObject {
 				| { admin: AdminMessages }
 				| { text: string }
 				| { setMe: Exclude<Loner['info'], null> }
-				| { meow: true }
+				| { meow: number }
 				| { getMe: true }
 				| { amILeft: true }
 				| { names: true }
@@ -371,7 +371,7 @@ export class MyDurableObject extends DurableObject {
 				return;
 			}
 			else if (typeof action === 'object' && 'meow' in action) {
-				otherWs.send(JSON.stringify({ meow: true }));
+				otherWs.send(JSON.stringify({ meow: action.meow }));
 				return;
 			}
 			else if (typeof action === 'object' && 'names' in action) {
